@@ -124,6 +124,49 @@ PyObject* PyCellGetCells(PyCell* self)
 }
 
 
+//
+// PyCellGetParameters returns a dictionary of all parameters of the cell.
+//
+PyObject* PyCellGetParameters(PyCell* self)
+{
+  auto cell = self->cell;
+  if (cell == NULL)
+  {
+    PyErr_SetString(PyExc_AttributeError, "cell");
+    return NULL;
+  }
+
+  PyObject* dict = PyDict_New();
+  auto& params = cell->GetParameters();
+
+  for (auto param_it = params.Begin(); param_it != params.End(); ++param_it)
+  {
+    PyObject* dict = PyObject_GenericGetDict((PyObject*) self, NULL);
+    if (dict == NULL)
+      return NULL;
+
+    PyParameter* pyparameter =
+      (PyParameter*) PyType_GenericAlloc(&pyparameter_type, 0);
+
+    Py_INCREF(self);
+    pyparameter->parameter = *param_it;
+
+    PyObject* name = PyUnicode_FromString(param_it.Key().c_str());
+    Py_INCREF(name);
+
+    pyparameter->name = name;
+    const char* key = param_it.Key().c_str();
+    if (PyDict_SetItemString(dict, key, (PyObject*) pyparameter) != 0)
+    {
+      Py_DECREF(dict);
+      return NULL;
+    }
+  }
+
+  return dict;
+}
+
+
 static PyMethodDef pycell_methods[] =
 {
   {
@@ -137,6 +180,12 @@ static PyMethodDef pycell_methods[] =
     (PyCFunction) PyCellGetCells,
     METH_NOARGS,
     "Return the cells of a pipeline or cluster"
+  },
+  {
+    "parameters",
+    (PyCFunction) PyCellGetParameters,
+    METH_NOARGS,
+    "Return the parameters of the cell"
   },
   {
     NULL  /* Sentinel */

@@ -18,6 +18,7 @@ extern "C" {
 extern PyTypeObject pygrid_type;
 extern PyTypeObject pychannel_type;
 extern PyTypeObject pycell_type;
+extern PyTypeObject pyparameter_type;
 
 // PyGrid describes the Grid class for Python and encapsulates the grid object.
 typedef struct
@@ -52,6 +53,16 @@ typedef struct
   PyObject*                         dict;
   std::shared_ptr<grid::Cell>       cell;
 } PyCell;
+
+
+// PyParameter describes a Parameter in Grid. The "parent" element can be
+// a PyChannel or a PyParameter describing a Cluster or Pipeline.
+typedef struct
+{
+  PyObject_HEAD
+  PyObject*                         name;
+  std::shared_ptr<grid::Parameter>  parameter;
+} PyParameter;
 
 
 } // end of extern "C"
