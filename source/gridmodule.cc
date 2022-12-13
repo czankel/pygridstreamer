@@ -71,5 +71,15 @@ PyInit_pygridstreamer(void)
     return NULL;
   }
 
+  if (PyType_Ready(&pychannel_type) < 0)
+    return NULL;
+
+  Py_INCREF(module);
+  if (PyModule_AddObject(module, "Channel", (PyObject *) &pychannel_type) < 0) {
+    Py_DECREF(&pychannel_type);
+    Py_DECREF(module);
+    return NULL;
+  }
+
   return module;
 }

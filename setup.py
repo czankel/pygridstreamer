@@ -14,6 +14,8 @@ setup(
             sources = [
                 'source/gridmodule.cc',
                 'source/grid.cc',
+                'source/channel.cc',
+                'source/cell.cc',
                 ],
             extra_compile_args=["-std=c++17"],
             language = "c++")
