@@ -112,9 +112,8 @@ PyObject* PyCellGetCells(PyCell* self)
     Py_INCREF(type);
     pycell->type = type;
 
-    printf("ITEM %s %s\n", cell_it.Key().c_str(), cell_it->Type().c_str());
-
-    if (PyDict_SetItemString(dict, cell_it.Key().c_str(), (PyObject*) pycell) != 0)
+    const char* key = cell_it.Key().c_str();
+    if (PyDict_SetItemString(dict, key, (PyObject*) pycell) != 0)
     {
       Py_DECREF(dict);
       return NULL;
@@ -131,13 +130,13 @@ static PyMethodDef pycell_methods[] =
     "type",
     (PyCFunction) PyCellGetType,
     METH_NOARGS,
-    "return the type of the cell, such as pipeline, cluster, or cell"
+    "Return the type of the cell, such as pipeline, cluster, or cell"
   },
   {
     "cells",
     (PyCFunction) PyCellGetCells,
     METH_NOARGS,
-    "return the cells of a pipeline or cluster"
+    "Return the cells of a pipeline or cluster"
   },
   {
     NULL  /* Sentinel */

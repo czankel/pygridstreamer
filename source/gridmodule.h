@@ -37,6 +37,9 @@ typedef struct
   std::shared_ptr<grid::Channel>    channel;
 } PyChannel;
 
+// PyChannel exported functions
+PyObject* PyChannelCompile(PyChannel* self, PyObject* pylayout);
+
 
 // PyCell describes a Cell in Grid. The "parent" element can be a PyChannel
 // or a PyCell describing a Cluster or Pipeline.
