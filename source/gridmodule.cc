@@ -6,6 +6,8 @@
 // The contents of this file are confidential and proprietary to Chris Zankel.
 //
 
+#include "gridmodule.h"
+
 #include <Python.h>
 
 #include <grid/fw/cell.h>
@@ -59,6 +61,15 @@ PyInit_pygridstreamer(void)
   if (module == NULL)
     return NULL;
 
+  if (PyType_Ready(&pygrid_type) < 0)
+    return NULL;
+
+  Py_INCREF(module);
+  if (PyModule_AddObject(module, "Grid", (PyObject *) &pygrid_type) < 0) {
+    Py_DECREF(&pygrid_type);
+    Py_DECREF(module);
+    return NULL;
+  }
+
   return module;
 }
-

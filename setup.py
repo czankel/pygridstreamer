@@ -13,6 +13,7 @@ setup(
             libraries = ["gridstreamer"],
             sources = [
                 'source/gridmodule.cc',
+                'source/grid.cc',
                 ],
             extra_compile_args=["-std=c++17"],
             language = "c++")
