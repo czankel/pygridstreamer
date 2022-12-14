@@ -31,7 +31,7 @@ PyObject* PyChannelCompile(PyChannel* self, PyObject* pylayout)
   grid::Builder builder;
   std::string err;
   std::unique_ptr<grid::Layout> layout =
-    builder.Compile(PyUnicode_AsUTF8(pylayout),err);
+    builder.Compile(PyUnicode_AsUTF8(pylayout), err);
   if (layout == NULL)
   {
     PyErr_SetString(PyExc_AttributeError, err.c_str());
@@ -69,17 +69,10 @@ PyObject* PyChannelGetCells(PyChannel* self)
   for (auto pipe_it = pipelines.Begin(); pipe_it != pipelines.End(); ++pipe_it)
   {
     PyCell* pycell = (PyCell*) PyType_GenericAlloc(&pycell_type, 0);
-
-    Py_INCREF(self);
     pycell->cell = *pipe_it;
 
-    PyObject* name = PyUnicode_FromString(pipe_it.Key().c_str());
-    Py_INCREF(name);
-    pycell->name = name;
-
-    PyObject* type = PyUnicode_FromString(pipe_it->Type().c_str());
-    Py_INCREF(type);
-    pycell->type = type;
+    pycell->name = PyUnicode_FromString(pipe_it.Key().c_str());
+    pycell->type = PyUnicode_FromString(pipe_it->Type().c_str());
 
     if (PyDict_SetItemString(dict, pipe_it.Key().c_str(), (PyObject*) pycell) != 0)
     {

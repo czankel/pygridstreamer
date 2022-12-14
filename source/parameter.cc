@@ -311,11 +311,11 @@ static PyGetSetDef pyparameter_getsets[] =
     NULL
   },
   {
-    "value",  /* name */
+    "value",
     (getter) PyParameterValueGet,
     (setter) PyParameterValueSet,
-    NULL,  /* doc */
-    NULL /* closure */
+    NULL,
+    NULL
   },
   {
     NULL  /* Sentinel */

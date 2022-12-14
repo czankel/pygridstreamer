@@ -49,8 +49,8 @@ PyGridAllocateChannel(PyGrid* self, PyObject* args, PyObject* kwargs)
     return NULL;
   }
 
-  auto name_utf8 = PyUnicode_AsUTF8(name);
-  if (strlen(name_utf8) == 0)
+  const char* name_utf8 = PyUnicode_AsUTF8(name);
+  if (name_utf8 == NULL || strlen(name_utf8) == 0)
   {
     PyErr_SetString(PyExc_AttributeError,
                     "Invalid name for the channel");
@@ -74,7 +74,7 @@ PyGridAllocateChannel(PyGrid* self, PyObject* args, PyObject* kwargs)
 
   Py_INCREF(self);
   pychannel->grid = self;
-  Py_INCREF(name);
+  Py_INCREF(name);  // note: borrowed reference
   pychannel->name = name;
   pychannel->channel = *channel;
 
@@ -82,20 +82,19 @@ PyGridAllocateChannel(PyGrid* self, PyObject* args, PyObject* kwargs)
   {
     self->grid->RemoveChannel(channel);
     Py_DECREF(pychannel);
-    // error set in PyChannelCompile
+    // note: error is set in PyChannelCompile
     return NULL;
   }
 
-  // pass on ownership
   return (PyObject*) pychannel;
 }
 
 
 //
-// GridGetChannels returns all Channels in the Grid.
+// PyGridGetChannels returns all Channels in the Grid.
 //
 static PyObject*
-GridGetChannels(PyGrid* self, PyObject* args)
+PyGridGetChannels(PyGrid* self, PyObject* args)
 {
   PyObject* list = PyList_New(0);
   if (list == NULL)
@@ -109,10 +108,7 @@ GridGetChannels(PyGrid* self, PyObject* args)
     Py_INCREF(self);
     pychannel->grid = self;
     pychannel->channel = *chan_it;
-
-    PyObject* name = PyUnicode_FromString(chan_it.Key().c_str());
-    Py_INCREF(name);
-    pychannel->name = name;
+    pychannel->name = PyUnicode_FromString(chan_it.Key().c_str());
 
     if (PyList_Append(list, (PyObject*) pychannel) != 0)
     {
@@ -140,6 +136,7 @@ static int PyGridInit(PyGrid* self, PyObject* args, PyObject* kwargs)
   Py_XINCREF(name);
   self->name = name;
   self->grid = std::make_shared<grid::BaseGrid>();
+
   return 0;
 }
 
@@ -165,7 +162,7 @@ static PyMethodDef pygrid_methods[] =
   },
   {
     "channels",
-    (PyCFunction) GridGetChannels,
+    (PyCFunction) PyGridGetChannels,
     METH_NOARGS,
     "Return all channels in the Grid"
   },

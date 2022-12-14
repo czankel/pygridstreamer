@@ -88,7 +88,7 @@ PyObject* PyCellGetCells(PyCell* self)
   grid::Pipeline* pipeline = cell->PipelineInterface();
   if (cluster == nullptr && pipeline == nullptr)
   {
-    PyErr_SetString(PyExc_AttributeError, "Cell is not a pipeline or cluster");
+    PyErr_SetString(PyExc_TypeError, "Cell is not a pipeline or cluster");
     return NULL;
   }
 
@@ -100,17 +100,16 @@ PyObject* PyCellGetCells(PyCell* self)
   for (auto cell_it = cells.Begin(); cell_it != cells.End(); ++cell_it)
   {
     PyCell* pycell = (PyCell*) PyType_GenericAlloc(&pycell_type, 0);
-
-    Py_INCREF(self);
     pycell->cell = *cell_it;
 
-    PyObject* name = PyUnicode_FromString(cell_it.Key().c_str());
-    Py_INCREF(name);
-    pycell->name = name;
+    pycell->name = PyUnicode_FromString(cell_it.Key().c_str());
+    pycell->type = PyUnicode_FromString(cell_it->Type().c_str());
 
-    PyObject* type = PyUnicode_FromString(cell_it->Type().c_str());
-    Py_INCREF(type);
-    pycell->type = type;
+    if (!PyCellAddParameters(pycell))
+    {
+      Py_DECREF(dict);
+      return NULL;
+    }
 
     const char* key = cell_it.Key().c_str();
     if (PyDict_SetItemString(dict, key, (PyObject*) pycell) != 0)
@@ -191,7 +190,6 @@ static PyMethodDef pycell_methods[] =
     NULL  /* Sentinel */
   }
 };
-
 
 
 PyTypeObject pycell_type =
