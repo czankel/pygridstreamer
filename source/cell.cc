@@ -17,6 +17,36 @@
 extern "C" {
 
 //
+// PyCellAddParamters is a helper function to add parameters to the cell...
+// with a list of paramters.
+//
+static bool PyCellAddParameters(PyCell* self)
+{
+  bool ret = true;
+  auto& params = self->cell->GetParameters();
+
+  PyObject* dict = PyObject_GenericGetDict((PyObject*)self, NULL);
+  for (auto param_it = params.Begin();
+       ret && param_it != params.End();
+       ++param_it)
+  {
+    PyParameter* pyparameter =
+      (PyParameter*) PyType_GenericAlloc(&pyparameter_type, 0);
+
+    pyparameter->parameter = *param_it;
+
+    const char* key = param_it.Key().c_str();
+    pyparameter->name = PyUnicode_FromString(key);
+
+    ret = PyDict_SetItemString(dict, key, (PyObject*) pyparameter) == 0;
+  }
+
+  Py_DECREF(dict);
+  return ret;
+}
+
+
+//
 // PyCellStr implements __str__ and returns the registered name of the Cell.
 //
 static PyObject* PyCellStr(PyCell* self)
@@ -118,15 +148,14 @@ PyObject* PyCellGetCells(PyCell* self)
       return NULL;
     }
   }
-
   return dict;
 }
 
 
 //
-// PyCellGetParameters returns a dictionary of all parameters of the cell.
+// PyCellGetParameters returns a list of all parameters of the cell.
 //
-PyObject* PyCellGetParameters(PyCell* self)
+static PyObject* PyCellGetParameters(PyCell* self)
 {
   auto cell = self->cell;
   if (cell == NULL)
@@ -135,34 +164,12 @@ PyObject* PyCellGetParameters(PyCell* self)
     return NULL;
   }
 
-  PyObject* dict = PyDict_New();
+  PyObject* list = PyList_New(0);
   auto& params = cell->GetParameters();
-
   for (auto param_it = params.Begin(); param_it != params.End(); ++param_it)
-  {
-    PyObject* dict = PyObject_GenericGetDict((PyObject*) self, NULL);
-    if (dict == NULL)
-      return NULL;
+    PyList_Append(list, PyUnicode_FromString(param_it.Key().c_str()));
 
-    PyParameter* pyparameter =
-      (PyParameter*) PyType_GenericAlloc(&pyparameter_type, 0);
-
-    Py_INCREF(self);
-    pyparameter->parameter = *param_it;
-
-    PyObject* name = PyUnicode_FromString(param_it.Key().c_str());
-    Py_INCREF(name);
-
-    pyparameter->name = name;
-    const char* key = param_it.Key().c_str();
-    if (PyDict_SetItemString(dict, key, (PyObject*) pyparameter) != 0)
-    {
-      Py_DECREF(dict);
-      return NULL;
-    }
-  }
-
-  return dict;
+  return list;
 }
 
 
@@ -181,6 +188,7 @@ static PyMethodDef pycell_methods[] =
     "Return the cells of a pipeline or cluster"
   },
   {
+    // TODO: move to member?
     "parameters",
     (PyCFunction) PyCellGetParameters,
     METH_NOARGS,
