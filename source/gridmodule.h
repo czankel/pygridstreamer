@@ -13,6 +13,14 @@
 
 #include <grid/fw/grid.h>
 
+// Helper functions to read and write arguments between Python arguments
+// and Grid::Arguments. Reading arguments returns a Python tuple. Writing
+// arguments can pass a single or tuple of arguments, or a string formatted
+// as supported by Grid::Parameters. The value passed as a single argument
+// or part of a tuple can also be a string.
+PyObject* PyGridStreamerReadArguments(uintptr_t, size_t, const unsigned long*);
+int PyGridStreamerWriteArguments(PyObject*, uintptr_t, size_t, const unsigned long*);
+
 extern "C" {
 
 extern PyTypeObject pygrid_type;
