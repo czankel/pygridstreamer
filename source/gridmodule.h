@@ -55,8 +55,7 @@ typedef struct
 } PyCell;
 
 
-// PyParameter describes a Parameter in Grid. The "parent" element can be
-// a PyChannel or a PyParameter describing a Cluster or Pipeline.
+// PyParameter describes a Parameter in Grid.
 typedef struct
 {
   PyObject_HEAD
