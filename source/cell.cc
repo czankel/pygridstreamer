@@ -17,8 +17,7 @@
 extern "C" {
 
 //
-// PyCellAddParamters is a helper function to add parameters to the cell...
-// with a list of paramters.
+// PyCellAddParamters is a helper function to add parameters to PyCell.
 //
 static bool PyCellAddParameters(PyCell* self)
 {
