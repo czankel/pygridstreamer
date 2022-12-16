@@ -34,10 +34,10 @@ static bool PyCellAddParameters(PyCell* self)
 
     pyparameter->parameter = *param_it;
 
-    const char* key = param_it.Key().c_str();
-    pyparameter->name = PyUnicode_FromString(key);
+    std::string key = PythonifyName(param_it.Key());
+    pyparameter->name = PyUnicode_FromString(key.c_str());
 
-    ret = PyDict_SetItemString(dict, key, (PyObject*) pyparameter) == 0;
+    ret = PyDict_SetItemString(dict, key.c_str(), (PyObject*) pyparameter) == 0;
   }
 
   Py_DECREF(dict);

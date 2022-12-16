@@ -21,6 +21,9 @@
 PyObject* PyGridStreamerReadArguments(uintptr_t, size_t, const unsigned long*);
 int PyGridStreamerWriteArguments(PyObject*, uintptr_t, size_t, const unsigned long*);
 
+// Helper function to convert camelCase/CamelCase to snake_case
+std::string PythonifyName(const std::string& name);
+
 extern "C" {
 
 extern PyTypeObject pygrid_type;

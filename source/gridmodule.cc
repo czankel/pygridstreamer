@@ -14,6 +14,27 @@
 
 
 //
+// PythonifyName is a helper function to convert a name to python convention.
+// Convert camelCase/CamelCase to snake_case
+//
+
+std::string PythonifyName(const std::string& name)
+{
+  std::string result;
+  const char* str = name.c_str();
+
+  for (size_t i = 0; i < name.size(); i++)
+  {
+    if (std::isupper(str[i]) && i != 0)
+      result.push_back('_');
+    result.push_back(std::tolower(str[i]));
+  }
+
+  return result;
+}
+
+
+//
 // PyGridStreamerCellTypes returns a list of cell types.
 //
 static PyObject* PyGridStreamerCellTypes(PyObject *self, PyObject *args)
