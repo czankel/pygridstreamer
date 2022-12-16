@@ -38,11 +38,20 @@ PyObject* PyChannelCompile(PyChannel* self, PyObject* pylayout)
     Py_RETURN_FALSE;
   }
 
+  channel->CreateLayout();
+
   PyGrid* grid = (PyGrid*)self->grid;
   if (!builder.UpdateChannel(*grid->grid, *channel, *layout))
   {
     // TODO: get error text from builder (not implemented yet)
     PyErr_SetString(PyExc_SyntaxError, "layout format");
+    channel->AbortLayout();
+    Py_RETURN_FALSE;
+  }
+
+  if (!channel->CommitLayout())
+  {
+    channel->AbortLayout();
     Py_RETURN_FALSE;
   }
 
@@ -54,7 +63,7 @@ PyObject* PyChannelCompile(PyChannel* self, PyObject* pylayout)
 // PyChannelGetCells returns a list of cells in the channel.
 // These could be pipelines or cells.
 //
-PyObject* PyChannelGetCells(PyChannel* self)
+static PyObject* PyChannelGetCells(PyChannel* self)
 {
   auto channel = self->channel;
   if (channel == NULL)
