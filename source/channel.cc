@@ -95,6 +95,136 @@ static PyObject* PyChannelGetCells(PyChannel* self)
 
 
 //
+// PyChannelSetState sets the state of the channel.
+//
+static int PyChannelSetState(PyChannel* self, PyObject* pystate)
+{
+  const char* state = PyUnicode_AsUTF8AndSize(pystate, NULL);
+  if (state == NULL)
+    return -1;
+
+  grid::State next_state = grid::kStateInvalid;
+  if (!strcmp(state, "null"))
+    next_state = grid::kStateNull;
+  else if (!strcmp(state, "ready"))
+    next_state = grid::kStateReady;
+  else if (!strcmp(state, "set"))
+    next_state = grid::kStateSet;
+  else if (!strcmp(state, "flushing"))
+    next_state = grid::kStateFlushing;
+  else if (!strcmp(state, "running"))
+    next_state = grid::kStateRunning;
+  else if (!strcmp(state, "paused"))
+    next_state = grid::kStatePaused;
+
+  if (next_state != grid::kStateInvalid && !self->channel->SetState(next_state))
+    return -1;
+
+  return 0;
+}
+
+
+//
+// PyChannelOpen initializes and opens  the channel and sets the state to
+// "set" unless the state is already higher.
+//
+static PyObject* PyChannelOpen(PyChannel* self)
+{
+  bool ret = true;
+
+  grid::State curr_state = self->channel->GetState();
+  if (curr_state < grid::kStateSet)
+    ret = self->channel->SetStateCond(curr_state, grid::kStateSet);
+
+  return PyBool_FromLong(ret);
+}
+
+
+//
+// PyChannelClose closes the channel.
+//
+static PyObject* PyChannelClose(PyChannel* self)
+{
+  return PyBool_FromLong(self->channel->SetState(grid::kStateNull));
+}
+
+
+//
+// PyChannelRun runs the channel (initializes it if not already initialized).
+//
+static PyObject* PyChannelRun(PyChannel* self)
+{
+  return PyBool_FromLong(self->channel->SetState(grid::kStateRunning));
+}
+
+
+//
+// PyChannelPause pauses a running channel (initializes and opens it if not
+// already in at least the state 'set')
+//
+static PyObject* PyChannelPause(PyChannel* self)
+{
+  return PyBool_FromLong(self->channel->SetState(grid::kStatePaused));
+}
+
+
+//
+// PyChannelFlush flushes a channel if running or initializes the channel if
+// uninitialized.
+//
+static PyObject* PyChannelFlush(PyChannel* self)
+{
+  return PyBool_FromLong(self->channel->SetState(grid::kStateFlushing));
+}
+
+
+//
+// PyChannelStop stops a channel unless it hasn't been anitialized.
+// Stopping a channel will drop any outstanding data.
+//
+static PyObject* PyChannelStop(PyChannel* self)
+{
+  bool ret = true;
+
+  grid::State curr_state = self->channel->GetState();
+  if (curr_state >= grid::kStateSet)
+    ret = self->channel->SetStateCond(curr_state, grid::kStateSet);
+
+  return PyBool_FromLong(ret);
+}
+
+
+//
+// PyChannelGetState returns the state of the channel.
+//
+static PyObject* PyChannelGetState(PyChannel* self)
+{
+  grid::State state = self->channel->GetState();
+
+  if (state == grid::kStateInvalid)
+    return PyUnicode_FromString("invalid");
+  else if (state == grid::kStateNull)
+    return PyUnicode_FromString("null");
+  else if (state == grid::kStateReady)
+    return PyUnicode_FromString("ready");
+  else if (state == grid::kStateSet)
+    return PyUnicode_FromString("set");
+  else if (state == grid::kStateFlushing)
+    return PyUnicode_FromString("flushing");
+  else if (state == grid::kStateRunning)
+    return PyUnicode_FromString("running");
+  else if (state == grid::kStatePaused)
+    return PyUnicode_FromString("paused");
+  else if (state == grid::kStateEnd)
+    return PyUnicode_FromString("end");
+  else if (state == grid::kStateError)
+    return PyUnicode_FromString("error");
+
+  return PyUnicode_FromString("unknown");
+}
+
+
+//
 // PyChannelStr implements __str__ and returns the registered name of
 // the Channel
 //
@@ -129,6 +259,26 @@ static void PyChannelDealloc(PyChannel* self)
 }
 
 
+//
+// Define PyChannel attributes
+//
+static PyGetSetDef pychannel_getsets[] =
+{
+  {
+    "state",
+    (getter) PyChannelGetState,
+    (setter) PyChannelSetState,
+    NULL,
+    NULL
+  },
+  {
+    NULL
+  }
+};
+
+
+//
+// Define the PyChannel methods
 static PyMethodDef pychannel_methods[] =
 {
   {
@@ -136,6 +286,42 @@ static PyMethodDef pychannel_methods[] =
     (PyCFunction) PyChannelGetCells,
     METH_NOARGS,
     "Return all pipeline cells in the channel"
+  },
+  {
+    "open",
+    (PyCFunction) PyChannelOpen,
+    METH_NOARGS,
+    "Open the channel and set state to Set",
+  },
+  {
+    "close",
+    (PyCFunction) PyChannelClose,
+    METH_NOARGS,
+    "Close the channel and set state to Set",
+  },
+  {
+    "run",
+    (PyCFunction) PyChannelRun,
+    METH_NOARGS,
+    "Run the channel and set the state to Running",
+  },
+  {
+    "pause",
+    (PyCFunction) PyChannelPause,
+    METH_NOARGS,
+    "Pause the channel",
+  },
+  {
+    "flush",
+    (PyCFunction) PyChannelFlush,
+    METH_NOARGS,
+    "Flush the channel",
+  },
+  {
+    "stop",
+    (PyCFunction) PyChannelStop,
+    METH_NOARGS,
+    "Stop the channel and drop any outstanding transports",
   },
   {
     NULL  /* Sentinel */
@@ -155,6 +341,7 @@ PyTypeObject pychannel_type =
   .tp_flags = Py_TPFLAGS_DEFAULT,
   .tp_doc = PyDoc_STR("Channel is a contained system of pipelines and streams"),
   .tp_methods = pychannel_methods,
+  .tp_getset = pychannel_getsets,
   .tp_init = (initproc) PyChannelInit,
   .tp_new = PyType_GenericNew,
 };
