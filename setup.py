@@ -13,6 +13,7 @@ setup(
             libraries = ["gridstreamer"],
             sources = [
                 'source/arguments.cc',
+                'source/callback.cc',
                 'source/cell.cc',
                 'source/channel.cc',
                 'source/grid.cc',

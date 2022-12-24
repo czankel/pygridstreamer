@@ -122,6 +122,16 @@ PyInit_pygridstreamer(void)
     return NULL;
   }
 
+  if (PyType_Ready(&pycallback_type) < 0)
+    return NULL;
+
+  Py_INCREF(module);
+  if (PyModule_AddObject(module, "Cell", (PyObject *) &pycallback_type) < 0) {
+    Py_DECREF(&pycallback_type);
+    Py_DECREF(module);
+    return NULL;
+  }
+
 
   return module;
 }

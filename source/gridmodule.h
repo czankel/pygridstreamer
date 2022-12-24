@@ -34,6 +34,8 @@ extern PyTypeObject pygrid_type;
 extern PyTypeObject pychannel_type;
 extern PyTypeObject pycell_type;
 extern PyTypeObject pyparameter_type;
+extern PyTypeObject pycallback_type;
+
 
 // PyGrid describes the Grid class for Python and encapsulates the grid object.
 typedef struct
@@ -77,6 +79,19 @@ typedef struct
   PyObject*                         name;
   std::shared_ptr<grid::Parameter>  parameter;
 } PyParameter;
+
+
+// PyCallback describes a Callback in Grid.
+typedef struct
+{
+  PyObject_HEAD
+  PyObject*                         name;
+  std::shared_ptr<grid::Callback>   callback;
+  std::unique_ptr<grid::Slot>       slot;
+  std::list<PyObject*>              functions;
+  bool                              active;
+} PyCallback;
+
 
 
 } // end of extern "C"
