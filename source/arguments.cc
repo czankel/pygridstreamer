@@ -14,11 +14,12 @@
 
 // Helper function to read arguments from an argument buffer into a python tuple
 PyObject*
-PyGridStreamerReadArguments(uintptr_t args_ptr,
+PyGridStreamerReadArguments(void* args_buf,
                             size_t args_sz,
                             const unsigned long* traits)
 {
   PyObject* tuple = PyTuple_New(traits[0]);
+  uintptr_t args_ptr = (uintptr_t) args_buf;
 
   for (size_t i = 1; i <= traits[0]; i++)
   {
@@ -33,8 +34,8 @@ PyGridStreamerReadArguments(uintptr_t args_ptr,
     // support only char arrays
     if (count > 1)
     {
-      if (((trait & ~grid::kCountMask) | (1 << grid::kCountShift))
-            == grid::TypeT<uint8_t>::Sig)
+      unsigned long t =  (trait & ~grid::kCountMask) | (1 << grid::kCountShift);
+      if (t == grid::TypeT<uint8_t>::Sig)
         item = PyUnicode_FromStringAndSize((const char*)args_ptr, size);
       else
         PyErr_SetString(PyExc_TypeError,
@@ -159,10 +160,12 @@ WriteSingleArgument(PyObject* item, uintptr_t& args_ptr, unsigned long trait)
 // Helper function to write python arguments (tupe, list, string, object) to
 // an argument buffer.
 int PyGridStreamerWriteArguments(PyObject* args,
-                                 uintptr_t args_ptr,
+                                 void* args_buf,
                                  size_t args_sz,
                                  const unsigned long* traits)
 {
+  uintptr_t args_ptr = (uintptr_t) args_buf;
+
   if (PyTuple_Check(args))
   {
     if (PyTuple_Size(args) != (Py_ssize_t)traits[0])

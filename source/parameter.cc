@@ -88,10 +88,7 @@ static int PyParameterValueSet(PyParameter* self, PyObject* args)
   size_t arg_buf_sz = param->GetArgumentBufferSize();
   char* arg_buf[arg_buf_sz];
 
-  if (!PyGridStreamerWriteArguments(args,
-                                    (uintptr_t)arg_buf,
-                                    arg_buf_sz,
-                                    traits))
+  if (!PyGridStreamerWriteArguments(args, arg_buf, arg_buf_sz, traits))
     return -1;
 
   return param->CallUnsafe(NULL, 0, arg_buf, arg_buf_sz)? 0 : -1;
@@ -118,9 +115,7 @@ static PyObject* PyParameterValueGet(PyParameter* self)
     return NULL;
   }
 
-  return PyGridStreamerReadArguments((uintptr_t)arg_buf,
-                                     arg_buf_sz,
-                                     param->GetSignature());
+  return PyGridStreamerReadArguments(arg_buf, arg_buf_sz, param->GetSignature());
 }
 
 
