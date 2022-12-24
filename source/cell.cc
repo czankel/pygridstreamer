@@ -46,6 +46,35 @@ static bool PyCellAddParameters(PyCell* self)
 
 
 //
+// PyCellAddCallbacks is a helper function to add callbacks to PyCell.
+//
+static bool PyCellAddCallbacks(PyCell* self)
+{
+  bool ret = true;
+  auto& callbacks = self->cell->GetCallbacks();
+
+  PyObject* dict = PyObject_GenericGetDict((PyObject*)self, NULL);
+  for (auto cb_it = callbacks.Begin(); ret && cb_it != callbacks.End(); ++cb_it)
+  {
+    PyCallback* pycallback =
+      (PyCallback*) PyType_GenericAlloc(&pycallback_type, 0);
+
+    std::string key = std::string("on_") + PythonifyName(cb_it.Key());
+    pycallback->name = PyUnicode_FromString(key.c_str());
+
+    pycallback->callback = *cb_it;
+    pycallback->active = true;
+    new (&pycallback->functions) std::list<PyObject*>();
+
+    ret = PyDict_SetItemString(dict, key.c_str(), (PyObject*) pycallback) == 0;
+  }
+
+  Py_DECREF(dict);
+  return ret;
+}
+
+
+//
 // PyCellStr implements __str__ and returns the registered name of the Cell.
 //
 static PyObject* PyCellStr(PyCell* self)
@@ -135,6 +164,12 @@ PyObject* PyCellGetCells(PyCell* self)
     pycell->type = PyUnicode_FromString(cell_it->Type().c_str());
 
     if (!PyCellAddParameters(pycell))
+    {
+      Py_DECREF(dict);
+      return NULL;
+    }
+
+    if (!PyCellAddCallbacks(pycell))
     {
       Py_DECREF(dict);
       return NULL;
